@@ -1,0 +1,15 @@
+.courseContainer {
+    display: flex;
+    flex-wrap: wrap;
+
+}
+
+.dark {
+    background-color: rgb(34, 3, 3);
+    color: white;
+}
+
+.light {
+    background-color: white;
+    color: black;
+}
