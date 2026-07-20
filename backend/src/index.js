@@ -5,6 +5,7 @@ import "dotenv/config";
 import path from 'path';
 import { fileURLToPath } from "url";
 import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 // const fs = require('fs/promises');
 // require('dotenv').config();
 // const path = require('path');
@@ -57,15 +58,18 @@ app.post('/signup', async (req, res) => {
             lastName,
             email,
             password: hashedPassword,
-            role: "student"
+            role: "student",
+            courses: []
         }
 
         users.push(newUser);
 
+        const { password: _, ...userData } = newUser;
+
         await fs.writeFile(userPath, JSON.stringify(users, null, 2));
         res.json({
             message: "New User added successfully",
-            data: newUser
+            data: userData
         });
         return;
     } catch(err) {
@@ -76,6 +80,72 @@ app.post('/signup', async (req, res) => {
     
 })
 
+app.post('/login', async (req, res) => {
+   const { email, password } = req.body;
+   if (!email || !password) {
+    res.json({ message: 'Email and password both are required for Login!'});
+    return;
+   }
+
+   const users = JSON.parse(await fs.readFile(userPath, 'utf-8'));
+
+   const user = users.find(u => u.email === email);
+
+   if (!user) {
+    res.json({ message: "User does not exist" });
+    return;
+   }
+
+   const isMatched = await bcrypt.compare(password, user.password);
+
+   if (!isMatched) {
+    res.json({ message: "Invalid credentials"});
+    return;
+   }
+
+   const token = jwt.sign(
+    {
+        id: user.id,
+        email: user.email,
+        role: user.role
+    },
+    process.env.JWT_SECRET,
+    { expiresIn: '7d' }
+   )
+
+   res.json({
+    message: "Logged in successfully",
+    token
+   });
+   return;
+});
+
+app.get('/courses',async (req, res) => {
+
+    try {
+        const courses = JSON.parse( await fs.readFile(coursePath, 'utf-8'));
+
+        if (!courses) {
+            res.json({ message: "No available course right now"});
+            return;
+        }
+
+        res.json({
+            message: "Courses fetched",
+            courses
+        });
+        return;
+
+    } catch(err) {
+        console.log('error: ', err);
+        res.json({ message: 'Error while fetching courses, try again!'});
+        return;
+    }
+});
+
+app.get('my-courses', (req, res) => {
+    // complete this
+})
 
 
 app.listen(port, () => {
