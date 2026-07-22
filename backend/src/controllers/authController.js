@@ -1,7 +1,8 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import fs from "fs/promises";
-import { userPath } from '../index.js';
+// import fs from "fs/promises";
+// import { userPath } from '../index.js';
+import User from '../models/User.js';
 
 export const signup = async (req, res) => {
     // const data = req.body;
@@ -14,35 +15,42 @@ export const signup = async (req, res) => {
             return;
         }
 
-        const users = JSON.parse(await fs.readFile( userPath, 'utf-8'));
+        // const users = JSON.parse(await fs.readFile( userPath, 'utf-8'));
+        // const existingUser = users.find(u => u.email === email);
 
-        const existingUser = users.find(u => u.email === email);
+        const existingUser = await User.findOne({ email });
 
         if (existingUser) {
-            res.json({ message: " User with this email already exists"});
+            res.json({ message: "User with this email already exists"});
             return;
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        const newUser = {
-            id: users.length + 1,
+        await User.create({
             firstName,
             lastName,
             email,
             password: hashedPassword,
-            role: "student",
-            courses: []
-        }
+            role: 'student'
+        })
 
-        users.push(newUser);
+        // const newUser = {
+        //     id: users.length + 1,
+        //     firstName,
+        //     lastName,
+        //     email,
+        //     password: hashedPassword,
+        //     role: "student",
+        //     courses: []
+        // }
 
-        const { password: _, ...userData } = newUser;
-
-        await fs.writeFile(userPath, JSON.stringify(users, null, 2));
+        // users.push(newUser);
+        // const { password: _, ...userData } = newUser;
+        // await fs.writeFile(userPath, JSON.stringify(users, null, 2));
         res.json({
             message: "New User added successfully",
-            data: userData
+            // data: userData
         });
         return;
     } catch(err) {
@@ -60,9 +68,10 @@ export const login = async (req, res) => {
      return;
     }
  
-    const users = JSON.parse(await fs.readFile(userPath, 'utf-8'));
- 
-    const user = users.find(u => u.email === email);
+    // const users = JSON.parse(await fs.readFile(userPath, 'utf-8'));
+    // const user = users.find(u => u.email === email);
+
+    const user = await User.findOne({ email });
  
     if (!user) {
      res.json({ message: "User does not exist" });

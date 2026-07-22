@@ -1,10 +1,12 @@
-import fs from 'fs/promises';
-import { coursePath } from '../index.js';
+// import fs from 'fs/promises';
+// import { coursePath } from '../index.js';
+import Course from '../models/Course.js'
 
-export const courses = async (req, res) => {
+export const getCourses = async (req, res) => {
 
     try {
-        const courses = JSON.parse( await fs.readFile(coursePath, 'utf-8'));
+        // const courses = JSON.parse( await fs.readFile(coursePath, 'utf-8'));
+        const courses = Course.find();
 
         if (!courses) {
             res.json({ message: "No available course right now"});
