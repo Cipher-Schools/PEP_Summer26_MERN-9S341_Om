@@ -67,3 +67,56 @@ export const addCourse = async (req, res) => {
         return;
     } 
 }
+
+export const myCourses = async (req, res) => {
+
+    const data = await User.findById(req.user.id)
+    .populate(
+        req.user.role === 'instructor' ? 'createdCourses' : 'enrolledCourses'
+    )
+
+    if (req.user.role === 'instructor') {
+        res.json({ 
+            message: 'Courses fetched',
+            course: data.createdCourses
+        });
+        return;
+    }
+    res.json({ 
+        message: 'Courses fetched',
+        course: data.enrolledCourses
+    });
+    return;
+}
+
+export const enrollCourse = async (req, res) => {
+
+    try {
+
+        const { courseId } = req.body;
+
+        const course = await Course.findById(courseId);
+
+        if (!course) {
+            res.json({ message: " Course not found "});
+            return;
+        }
+
+        await User.findByIdAndUpdate(
+            req.user.id,
+            {
+                $addToSet: {
+                    enrolledCourses: courseId
+                }
+            }
+        );
+
+        res.json({
+            message: 'Course enrolled successfully'
+        })
+        return;
+    
+    } catch(err) {
+        console.log("Error: ", err);
+    }
+}
